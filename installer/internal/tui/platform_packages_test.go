@@ -199,10 +199,12 @@ func TestIsDnfNoOp(t *testing.T) {
 func TestInstallPlatformPackagesFedoraTreatsDnfNoOpAsSuccess(t *testing.T) {
 	originalSudo := runSudoWithLogs
 	originalBrew := runBrewWithLogs
+	originalDnfAvail := dnfPackageAvailable
 
 	sudoCalls := 0
 	brewCalls := 0
 
+	dnfPackageAvailable = func(string) bool { return true }
 	runSudoWithLogs = func(command string, opts *system.ExecOptions, onLog system.LogCallback) *system.ExecResult {
 		sudoCalls++
 		return &system.ExecResult{
@@ -220,6 +222,7 @@ func TestInstallPlatformPackagesFedoraTreatsDnfNoOpAsSuccess(t *testing.T) {
 	t.Cleanup(func() {
 		runSudoWithLogs = originalSudo
 		runBrewWithLogs = originalBrew
+		dnfPackageAvailable = originalDnfAvail
 	})
 
 	m := &Model{SystemInfo: &system.SystemInfo{OS: system.OSFedora, HasBrew: true}}
@@ -236,5 +239,28 @@ func TestInstallPlatformPackagesFedoraTreatsDnfNoOpAsSuccess(t *testing.T) {
 	}
 	if brewCalls != 0 {
 		t.Errorf("brewCalls = %d, want 0 (should not fall back to brew when dnf says nothing to do)", brewCalls)
+	}
+}
+
+func TestInstallPlatformPackagesKittyOnLinux(t *testing.T) {
+	calls := withPackageCommandMocks(t, nil)
+
+	m := &Model{SystemInfo: &system.SystemInfo{OS: system.OSArch, HasBrew: false}}
+	result := installPlatformPackages(m, "terminal", platformPackages{
+		Brew:   "kitty",
+		Arch:   "kitty",
+		Fedora: "kitty",
+		Debian: "kitty",
+	}, nil)
+
+	if result.Error != nil {
+		t.Fatalf("expected kitty install to succeed, got error: %v", result.Error)
+	}
+
+	expected := []packageCommandCall{
+		{runner: "sudo", command: "pacman -S --needed --noconfirm kitty"},
+	}
+	if !reflect.DeepEqual(*calls, expected) {
+		t.Fatalf("calls = %#v, want %#v", *calls, expected)
 	}
 }
