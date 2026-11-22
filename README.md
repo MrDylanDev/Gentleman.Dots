@@ -73,9 +73,27 @@ chmod +x gentleman.dots
 
 Termux requires building locally. See the [Termux Installation Guide](docs/manual-installation.md#termux) for full instructions.
 
+### Option 4: Build from Source (Fork with all latest fixes)
+
+To run the installer with every latest community and distro fix directly from this fork:
+
+```bash
+git clone https://github.com/MrDylanDev/Gentleman.Dots.git
+cd Gentleman.Dots/installer
+go build -o ../gentleman-dots ./cmd/gentleman-installer
+cd ..
+./gentleman-dots
+```
+
 The TUI guides you through selecting your preferred tools and handles all the configuration automatically.
 
-During multiplexer selection, choose **Tmux**, **Zellij**, **Herdr**, or **None**. Fish, Zsh, and Nushell are patched to auto-start the selected multiplexer on fresh interactive shells while avoiding nested sessions.
+During multiplexer selection, choose **Tmux**, **Zellij**, **Herdr**, or **None**. Fish, Zsh, and Nushell are patched to auto-start the selected multiplexer on fresh interactive shells while avoiding nested sessions (on Omarchy OS, Herdr shell autostart is skipped to respect native `Super+Return` / `Super+Ctrl+Return` keybindings).
+
+> **Theme Selectors (`gentleman` vs `gentleman-cute`):**
+> - In **Fish**, run `fish-theme gentleman` or `fish-theme gentleman-cute` to switch Fish, Starship, and Atuin themes on the fly.
+> - In **Herdr**, run `herdr-theme gentleman` or `herdr-theme gentleman-cute` to switch Herdr profiles and reload the server.
+>
+> **Persistent Zsh Customizations:** Place custom Zsh scripts inside `~/.zshrc.d/*.zsh`. They are sourced automatically in lexical order after core integrations and survive installer updates.
 
 > **Tmux users:** After installation, open tmux and press `prefix + I` (capital I) to install plugins via TPM. This ensures the theme and all plugins load correctly.
 
@@ -89,10 +107,11 @@ During multiplexer selection, choose **Tmux**, **Zellij**, **Herdr**, or **None*
 |----------|--------------|----------------|-----------------|
 | macOS | Apple Silicon (ARM64) | Homebrew, Direct Download | Homebrew |
 | macOS | Intel (x86_64) | Homebrew, Direct Download | Homebrew |
-| Linux (Ubuntu/Debian) | x86_64, ARM64 | Homebrew, Direct Download | Homebrew |
-| Linux (Fedora/RHEL) | x86_64, ARM64 | Direct Download | dnf |
-| Linux (Arch) | x86_64 | Homebrew, Direct Download | Homebrew |
-| Windows | WSL | Direct Download (see docs) | Homebrew |
+| Linux (Ubuntu/Debian) | x86_64, ARM64 | Homebrew, Direct Download, Source | apt / Homebrew |
+| Linux (Fedora/RHEL 9) | x86_64, ARM64 | Direct Download, Source | dnf (dnf4/dnf5) / Homebrew |
+| Linux (Arch/CachyOS/Omarchy) | x86_64 | Homebrew, Direct Download, Source | pacman / Homebrew |
+| Linux (Atomic: Bazzite/Silverblue) | x86_64 | Homebrew, Direct Download, Source | Homebrew / Flatpak |
+| Windows | WSL | Direct Download (see docs) | apt / Homebrew |
 | Android | Termux (ARM64) | Build locally (see above) | pkg |
 
 ---

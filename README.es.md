@@ -75,9 +75,27 @@ chmod +x gentleman.dots
 
 Termux requiere compilar localmente. Consultá la [Guía de instalación en Termux](docs/manual-installation.md#termux) para las instrucciones completas.
 
+### Opción 4: Compilar desde el código fuente (Fork con todos los fixes)
+
+Para ejecutar el instalador con todos los fixes recientes de distros y shells directamente desde este fork:
+
+```bash
+git clone https://github.com/MrDylanDev/Gentleman.Dots.git
+cd Gentleman.Dots/installer
+go build -o ../gentleman-dots ./cmd/gentleman-installer
+cd ..
+./gentleman-dots
+```
+
 ---
 
-El TUI te deja elegir **Tmux**, **Zellij**, **Herdr** o **None** como multiplexor. Fish, Zsh y Nushell quedan configurados para iniciar el multiplexor elegido en shells interactivos nuevos, evitando sesiones anidadas.
+El TUI te deja elegir **Tmux**, **Zellij**, **Herdr** o **None** como multiplexor. Fish, Zsh y Nushell quedan configurados para iniciar el multiplexor elegido en shells interactivos nuevos, evitando sesiones anidadas (en Omarchy OS se omite el autostart de Herdr en el shell para respetar los atajos nativos `Super+Return` / `Super+Ctrl+Return`).
+
+> **Selectores de Tema (`gentleman` vs `gentleman-cute`):**
+> - En **Fish**, ejecutá `fish-theme gentleman` o `fish-theme gentleman-cute` para alternar el tema de Fish, Starship y Atuin en caliente.
+> - En **Herdr**, ejecutá `herdr-theme gentleman` o `herdr-theme gentleman-cute` para cambiar el perfil de Herdr y recargar el servidor.
+>
+> **Personalizaciones persistentes en Zsh:** Guardá tus scripts personalizados en `~/.zshrc.d/*.zsh`. Se cargan automáticamente en orden léxico y sobreviven a futuras actualizaciones del instalador.
 
 > **Usuarios de Tmux:** Después de la instalación, abrí tmux y presioná `prefix + I` (I mayúscula) para instalar los plugins con TPM. Esto asegura que el tema y los plugins carguen correctamente.
 
@@ -87,15 +105,16 @@ El TUI te deja elegir **Tmux**, **Zellij**, **Herdr** o **None** como multiplexo
 
 ## Plataformas soportadas
 
-| Plataforma            | Arquitectura          | Método de instalación       | Gestor de paquetes |
-| --------------------- | --------------------- | --------------------------- | ------------------ |
-| macOS                 | Apple Silicon (ARM64) | Homebrew, descarga directa  | Homebrew           |
-| macOS                 | Intel (x86_64)        | Homebrew, descarga directa  | Homebrew           |
-| Linux (Ubuntu/Debian) | x86_64, ARM64         | Homebrew, descarga directa  | Homebrew           |
-| Linux (Fedora/RHEL)   | x86_64, ARM64         | Descarga directa            | dnf                |
-| Linux (Arch)          | x86_64                | Homebrew, descarga directa  | Homebrew           |
-| Windows               | WSL                   | Descarga directa (ver docs) | Homebrew           |
-| Android               | Termux (ARM64)        | Compilación local           | pkg                |
+| Plataforma                         | Arquitectura          | Método de instalación                | Gestor de paquetes         |
+| ---------------------------------- | --------------------- | ------------------------------------ | -------------------------- |
+| macOS                              | Apple Silicon (ARM64) | Homebrew, descarga directa           | Homebrew                   |
+| macOS                              | Intel (x86_64)        | Homebrew, descarga directa           | Homebrew                   |
+| Linux (Ubuntu/Debian)              | x86_64, ARM64         | Homebrew, descarga directa, fuente   | apt / Homebrew             |
+| Linux (Fedora/RHEL 9)              | x86_64, ARM64         | Descarga directa, fuente             | dnf (dnf4/dnf5) / Homebrew |
+| Linux (Arch/CachyOS/Omarchy)       | x86_64                | Homebrew, descarga directa, fuente   | pacman / Homebrew          |
+| Linux (Atómico: Bazzite/Silverblue)| x86_64                | Homebrew, descarga directa, fuente   | Homebrew / Flatpak         |
+| Windows                            | WSL                   | Descarga directa (ver docs)          | apt / Homebrew             |
+| Android                            | Termux (ARM64)        | Compilación local                    | pkg                        |
 
 ---
 
