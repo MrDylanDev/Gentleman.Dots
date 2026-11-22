@@ -52,6 +52,7 @@ func TestArchPackageListsMatchExpected(t *testing.T) {
 	// Every Arch package list in installer.go, in source order. All names were
 	// verified against the official Arch package database (core/extra).
 	expected := []string{
+		"kitty",
 		"fish zoxide atuin starship",
 		"zsh zoxide atuin zsh-autosuggestions zsh-syntax-highlighting zsh-autocomplete",
 		"nushell zoxide atuin jq bash starship",
@@ -79,5 +80,34 @@ func TestArchPackageListsMatchExpected(t *testing.T) {
 		if got[i] != expected[i] {
 			t.Errorf("Arch package list %d:\n got  %q\n want %q", i, got[i], expected[i])
 		}
+	}
+}
+
+// TestStepNeovimSkipsOpenCodeWhenAlreadyInstalled verifies that stepNeovim does
+// not run https://opencode.ai/install unconditionally when opencode is already
+// installed in PATH or ~/.opencode/bin/opencode, preventing an OpenCode v2
+// install from being downgraded to OpenCode v1 (which breaks opencode.db with
+// "Database is not empty and has no session table").
+func TestStepNeovimSkipsOpenCodeWhenAlreadyInstalled(t *testing.T) {
+	if !shouldSkipOpenCodeInstall(func(cmd string) bool { return cmd == "opencode" }, "/nonexistent") {
+		t.Error("expected shouldSkipOpenCodeInstall to return true when opencode is in PATH")
+	}
+
+	tmpHome := t.TempDir()
+	binDir := tmpHome + "/.opencode/bin"
+	if err := os.MkdirAll(binDir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	binPath := binDir + "/opencode"
+	if err := os.WriteFile(binPath, []byte("#!/bin/sh\n"), 0o755); err != nil {
+		t.Fatalf("write opencode binary: %v", err)
+	}
+
+	if !shouldSkipOpenCodeInstall(func(string) bool { return false }, tmpHome) {
+		t.Error("expected shouldSkipOpenCodeInstall to return true when ~/.opencode/bin/opencode exists")
+	}
+
+	if shouldSkipOpenCodeInstall(func(string) bool { return false }, "/nonexistent") {
+		t.Error("expected shouldSkipOpenCodeInstall to return false when opencode is absent")
 	}
 }

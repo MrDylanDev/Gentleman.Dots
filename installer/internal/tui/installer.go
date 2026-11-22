@@ -1483,12 +1483,19 @@ func stepInstallNvim(m *Model) error {
 	}
 
 	// Install OpenCode CLI (optional, don't fail on error)
-	// Skip on Termux - OpenCode doesn't support Android
+	// Skip on Termux - OpenCode doesn't support Android.
+	// Skip if opencode is already installed so an existing OpenCode v2 binary
+	// is not downgraded to v1 by https://opencode.ai/install (which breaks the
+	// v2 SQLite schema in ~/.local/share/opencode/opencode.db).
 	if !m.SystemInfo.IsTermux {
-		SendLog(stepID, "Installing OpenCode CLI (optional)...")
-		system.RunWithLogs(`curl -fsSL https://opencode.ai/install | bash`, nil, func(line string) {
-			SendLog(stepID, line)
-		})
+		if shouldSkipOpenCodeInstall(system.CommandExists, homeDir) {
+			SendLog(stepID, "OpenCode CLI already installed, skipping...")
+		} else {
+			SendLog(stepID, "Installing OpenCode CLI (optional)...")
+			system.RunWithLogs(`curl -fsSL https://opencode.ai/install | bash`, nil, func(line string) {
+				SendLog(stepID, line)
+			})
+		}
 		// AI tool configs are managed by gentle-ai (https://github.com/gentleman-programming/gentle-ai)
 	} else {
 		SendLog(stepID, "Skipping OpenCode (not supported on Termux)")
@@ -1496,6 +1503,19 @@ func stepInstallNvim(m *Model) error {
 
 	SendLog(stepID, "✓ Neovim configured with Gentleman setup")
 	return nil
+}
+
+// shouldSkipOpenCodeInstall reports whether an OpenCode binary is already
+// available in PATH or at ~/.opencode/bin/opencode.
+func shouldSkipOpenCodeInstall(commandExists func(string) bool, homeDir string) bool {
+	if commandExists != nil && commandExists("opencode") {
+		return true
+	}
+	if homeDir == "" {
+		return false
+	}
+	info, err := os.Stat(filepath.Join(homeDir, ".opencode", "bin", "opencode"))
+	return err == nil && !info.IsDir()
 }
 
 func stepCleanup(m *Model) error {
