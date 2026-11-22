@@ -78,12 +78,7 @@ func installAvailablePackages(packages string, available func(string) bool, nati
 		return &system.ExecResult{Error: fmt.Errorf("none of the requested packages are available: %s", packages)}
 	}
 
-	result := runSudoWithLogs(nativeCommand(ok), nil, onLog)
-	if result.Error == nil || !hasBrew || brewPackages == "" {
-		return result
-	}
-
-	return runBrewWithLogs("install "+brewPackages, nil, onLog)
+	return runNativeWithBrewFallback(nativeCommand(ok), brewPackages, hasBrew, onLog)
 }
 
 // installArchPackages installs an Arch package list without letting a name that
