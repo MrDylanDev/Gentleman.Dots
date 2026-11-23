@@ -1,7 +1,11 @@
 -- This file contains the configuration for setting up the lazy.nvim plugin manager in Neovim.
 
 -- Node.js configuration - always use latest stable version
-vim.g.node_host_prog = vim.fn.exepath("node") or "/usr/local/bin/node"
+-- (config.nodejs already resolved the real path before lazy.nvim loads;
+-- only override here when `node` is actually resolvable through $PATH)
+if vim.fn.exepath("node") ~= "" then
+  vim.g.node_host_prog = vim.fn.exepath("node")
+end
 
 -- Spell-checking
 vim.opt.spell = true -- activa spell checker
