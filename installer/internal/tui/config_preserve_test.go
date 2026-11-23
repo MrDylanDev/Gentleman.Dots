@@ -102,6 +102,89 @@ func TestInstallOhMyZshTreatsSymlinkedCheckoutAsPresent(t *testing.T) {
 	}
 }
 
+// The reported defect: copying the bundled snapshot over fish_variables made
+// running shells reload the file, drop every universal variable it no longer
+// contained (pure/done settings), and break the prompt.
+func TestCopyFishConfigPreservesExistingUniversalVariables(t *testing.T) {
+	root := t.TempDir()
+	bundled := filepath.Join(root, "GentlemanFish", "fish")
+	fishDir := filepath.Join(root, "home", ".config", "fish")
+
+	writeTestFile(t, filepath.Join(bundled, "config.fish"), "bundled config\n")
+	writeTestFile(t, filepath.Join(bundled, "fish_variables"), "bundled vars\n")
+
+	const userVars = "SETUVAR __done_min_cmd_duration:10000\nSETUVAR pure_shorten_prompt_current_directory_length:0\n"
+	writeTestFile(t, filepath.Join(fishDir, "fish_variables"), userVars)
+
+	if err := copyFishConfigPreservingVariables(bundled, fishDir); err != nil {
+		t.Fatalf("copyFishConfigPreservingVariables() error: %v", err)
+	}
+
+	configData, err := os.ReadFile(filepath.Join(fishDir, "config.fish"))
+	if err != nil {
+		t.Fatalf("read config.fish: %v", err)
+	}
+	if string(configData) != "bundled config\n" {
+		t.Fatalf("config.fish = %q, want bundled config", string(configData))
+	}
+
+	varsData, err := os.ReadFile(filepath.Join(fishDir, "fish_variables"))
+	if err != nil {
+		t.Fatalf("read fish_variables: %v", err)
+	}
+	if string(varsData) != userVars {
+		t.Fatalf("fish_variables was replaced: got %q, want %q", string(varsData), userVars)
+	}
+}
+
+func TestCopyFishConfigUsesBundledVariablesOnFreshInstall(t *testing.T) {
+	root := t.TempDir()
+	bundled := filepath.Join(root, "GentlemanFish", "fish")
+	fishDir := filepath.Join(root, "home", ".config", "fish")
+
+	writeTestFile(t, filepath.Join(bundled, "fish_variables"), "bundled vars\n")
+
+	if err := copyFishConfigPreservingVariables(bundled, fishDir); err != nil {
+		t.Fatalf("copyFishConfigPreservingVariables() error: %v", err)
+	}
+
+	varsData, err := os.ReadFile(filepath.Join(fishDir, "fish_variables"))
+	if err != nil {
+		t.Fatalf("read fish_variables: %v", err)
+	}
+	if string(varsData) != "bundled vars\n" {
+		t.Fatalf("fish_variables = %q, want bundled defaults", string(varsData))
+	}
+}
+
+func TestCopyFishConfigSkipsWritesUnderDryRun(t *testing.T) {
+	t.Setenv("GENTLEMAN_DRY_RUN", "1")
+
+	root := t.TempDir()
+	bundled := filepath.Join(root, "GentlemanFish", "fish")
+	fishDir := filepath.Join(root, "home", ".config", "fish")
+
+	writeTestFile(t, filepath.Join(bundled, "config.fish"), "bundled config\n")
+	const userVars = "SETUVAR __done_min_cmd_duration:10000\n"
+	writeTestFile(t, filepath.Join(fishDir, "fish_variables"), userVars)
+
+	if err := copyFishConfigPreservingVariables(bundled, fishDir); err != nil {
+		t.Fatalf("copyFishConfigPreservingVariables() error: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(fishDir, "config.fish")); !os.IsNotExist(err) {
+		t.Fatalf("config.fish should not be copied under dry-run, stat err = %v", err)
+	}
+
+	varsData, err := os.ReadFile(filepath.Join(fishDir, "fish_variables"))
+	if err != nil {
+		t.Fatalf("read fish_variables: %v", err)
+	}
+	if string(varsData) != userVars {
+		t.Fatalf("fish_variables changed under dry-run: got %q", string(varsData))
+	}
+}
+
 func TestPreserveExistingConfigFileCopiesRegularFile(t *testing.T) {
 	homeDir := t.TempDir()
 	zshrc := filepath.Join(homeDir, ".zshrc")

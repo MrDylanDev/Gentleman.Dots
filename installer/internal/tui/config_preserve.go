@@ -46,6 +46,33 @@ func preserveExistingConfig(m *Model, stepID, label, path string) error {
 	return nil
 }
 
+// copyFishConfigPreservingVariables copies the bundled Fish tree without
+// replacing an existing ~/.config/fish/fish_variables.
+//
+// fish_variables holds universal variables and fish watches it at runtime: when
+// the file is rewritten, running shells drop every universal variable missing
+// from the new file. Overwriting it with the bundled snapshot therefore erased
+// the user's pure/done settings live and broke the prompt in already-open
+// terminals. On a fresh install the bundled defaults are kept, and fish
+// regenerates the file by itself.
+func copyFishConfigPreservingVariables(srcDir, fishDir string) error {
+	variablesPath := filepath.Join(fishDir, "fish_variables")
+	preserved, readErr := os.ReadFile(variablesPath)
+	if readErr == nil && system.IsDryRun() {
+		return nil
+	}
+
+	if err := system.CopyDir(srcDir, fishDir); err != nil {
+		return err
+	}
+
+	if readErr != nil {
+		return nil
+	}
+
+	return os.WriteFile(variablesPath, preserved, 0o600)
+}
+
 // installOhMyZshIfMissing provides the bundled Oh My Zsh snapshot only when the
 // user has none. An existing ~/.oh-my-zsh is a git checkout that updates
 // itself: writing the vendored snapshot over it marks every differing tracked

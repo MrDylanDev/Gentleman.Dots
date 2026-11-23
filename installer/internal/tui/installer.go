@@ -990,7 +990,7 @@ func stepInstallShell(m *Model) error {
 				"Failed to back up existing Fish configuration",
 				err)
 		}
-		if err := system.CopyDir(filepath.Join(repoDir, "GentlemanFish", "fish"), filepath.Join(homeDir, ".config", "fish")); err != nil {
+		if err := copyFishConfigPreservingVariables(filepath.Join(repoDir, "GentlemanFish", "fish"), filepath.Join(homeDir, ".config", "fish")); err != nil {
 			return wrapStepError("shell", "Install Fish",
 				"Failed to copy Fish configuration",
 				err)
