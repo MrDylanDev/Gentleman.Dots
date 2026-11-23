@@ -120,6 +120,15 @@ local function setup_nodejs()
         -- Set the Node.js host program
         vim.g.node_host_prog = node_path
 
+        -- Put the selected node/npm on Neovim's PATH so tools that spawn
+        -- binaries (Mason, LSP servers, formatters...) can find them.
+        local node_dir = vim.fn.fnamemodify(node_path, ":h")
+        local sep = vim.fn.has("win32") == 1 and ";" or ":"
+        local path_entries = vim.split(vim.env.PATH or "", sep, { plain = true })
+        if not vim.tbl_contains(path_entries, node_dir) then
+          vim.env.PATH = node_dir .. sep .. (vim.env.PATH or "")
+        end
+
         -- Set npm path (prefer the npm that ships with the chosen node)
         local npm_path = node_path:gsub("node$", "npm")
         if vim.fn.executable(npm_path) ~= 1 then
